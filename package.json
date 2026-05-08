@@ -1,0 +1,9 @@
+{
+  "name": "veste-provador-virtual",
+  "version": "1.0.0",
+  "description": "Provador virtual com IA — FASHN v1.6 + Claude",
+  "private": true,
+  "engines": {
+    "node": ">=18.x"
+  }
+}
