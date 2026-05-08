@@ -1,4 +1,6 @@
-// api/size-analysis.js — Análise de biotipo e tamanho via Claude API
+// api/size-analysis.js — Versão SEM IA (cálculo por IMC)
+// Não precisa de chave Anthropic. 100% grátis.
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -7,57 +9,61 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
-  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!ANTHROPIC_KEY) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY não configurada" });
-  }
-
   try {
     const { altura, peso } = req.body;
+    const alturaCm = parseFloat(altura);
+    const pesoKg = parseFloat(peso);
 
-    const prompt = `Você é um especialista em moda. Analise:
-- Altura: ${altura} cm
-- Peso: ${peso} kg
-
-Recomende:
-1. Tamanho ideal (PP, P, M, G, GG, XGG)
-2. IMC e classificação
-3. Biotipo (ectomorfo, mesomorfo, endomorfo)
-4. Dicas de caimento curtas
-5. Confiança 0-100
-
-Responda APENAS JSON válido sem markdown:
-{
-  "tamanho": "M",
-  "biotipo": "Mesomorfo",
-  "imc": "23.5",
-  "imcClassificacao": "Peso normal",
-  "dicas": "Texto curto",
-  "confianca": 92
-}`;
-
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      return res.status(resp.status).json({ error: errText });
+    if (!alturaCm || !pesoKg) {
+      return res.status(400).json({ error: "Altura e peso são obrigatórios" });
     }
 
-    const data = await resp.json();
-    const text = data.content[0].text.replace(/```json|```/g, "").trim();
-    return res.status(200).json(JSON.parse(text));
+    // Calcula IMC
+    const alturaM = alturaCm / 100;
+    const imc = pesoKg / (alturaM * alturaM);
+    const imcRound = imc.toFixed(1);
+
+    // Classificação IMC
+    let imcClassificacao;
+    if (imc < 18.5) imcClassificacao = "Abaixo do peso";
+    else if (imc < 25) imcClassificacao = "Peso normal";
+    else if (imc < 30) imcClassificacao = "Sobrepeso";
+    else if (imc < 35) imcClassificacao = "Obesidade I";
+    else imcClassificacao = "Obesidade II+";
+
+    // Tamanho recomendado por IMC + altura
+    let tamanho;
+    if (imc < 19) tamanho = "PP";
+    else if (imc < 22) tamanho = "P";
+    else if (imc < 26) tamanho = "M";
+    else if (imc < 30) tamanho = "G";
+    else if (imc < 34) tamanho = "GG";
+    else tamanho = "XGG";
+
+    // Ajuste para pessoas muito altas (manga/comprimento)
+    if (alturaCm > 185 && tamanho === "M") tamanho = "G";
+
+    // Biotipo aproximado
+    let biotipo;
+    if (imc < 20) biotipo = "Ectomorfo";
+    else if (imc < 26) biotipo = "Mesomorfo";
+    else biotipo = "Endomorfo";
+
+    // Dicas básicas por biotipo
+    const dicasMap = {
+      "Ectomorfo": "Peças com caimento mais ajustado realçam sua silhueta. Tecidos estruturados funcionam bem.",
+      "Mesomorfo": "Sua estrutura aceita praticamente qualquer modelagem. Aposte em peças que valorizem a cintura.",
+      "Endomorfo": "Tecidos fluidos e modelagens retas trazem conforto e elegância. Evite peças muito justas."
+    };
+
+    return res.status(200).json({
+      tamanho,
+      biotipo,
+      imc: imcRound,
+      imcClassificacao,
+      dicas: dicasMap[biotipo],
+      confianca: 85
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
