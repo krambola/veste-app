@@ -3,371 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vestê — Provador Virtual com IA</title>
-<meta name="description" content="Prove antes de comprar. Envie sua foto, escolha a peça e veja como fica em segundos.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Provar em Mim — Vestê</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #fafaf9; color: #1c1917; }
-  .display-font { font-family: 'Fraunces', serif; font-feature-settings: "ss01"; }
-  .marquee { animation: scroll 30s linear infinite; }
-  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  .fade-up { animation: fadeUp 0.6s ease-out; }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .step-pulse { animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #050510; color: #f5f5f7; margin: 0; min-height: 100vh; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .bg-mesh { background: radial-gradient(at 30% 30%, rgba(127,119,221,0.25) 0px, transparent 50%), radial-gradient(at 70% 70%, rgba(99,102,241,0.15) 0px, transparent 50%); }
+  .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+  .glass-strong { background: rgba(255,255,255,0.06); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.12); }
+  .gradient-text { background: linear-gradient(135deg, #fff 0%, #b8a5ff 50%, #7f77dd 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .btn-primary { background: linear-gradient(135deg, #7f77dd 0%, #5d4dd6 100%); box-shadow: 0 0 30px rgba(127,119,221,0.4); transition: all 0.3s; }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 0 50px rgba(127,119,221,0.6); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+  @keyframes scan { 0%{transform:translateY(-100%);} 100%{transform:translateY(200%);} }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  @keyframes fade-up { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+  .blink { animation: blink 2s ease-in-out infinite; }
+  .fade-up { animation: fade-up 0.5s ease-out; }
+  .scan-line { position: relative; overflow: hidden; }
+  .scan-line::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#7f77dd,transparent); animation: scan 3s linear infinite; pointer-events:none; }
+  .glass-input { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#f5f5f7; }
+  .glass-input:focus { outline:none; border-color:rgba(127,119,221,0.5); }
+  .glass-input::placeholder { color:rgba(255,255,255,0.3); }
   .hidden { display: none !important; }
 </style>
 </head>
-<body>
+<body class="bg-mesh">
 
-<!-- HEADER -->
-<header class="border-b border-stone-200 bg-stone-50/80 backdrop-blur sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+<div class="max-w-2xl mx-auto px-4 py-6 min-h-screen">
+
+  <header class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-stone-900 rounded-full flex items-center justify-center">
-        <svg class="w-4 h-4 text-stone-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l1.5 1.5L8 3l1.5 1.5L11 3l1.5 1.5L14 3l1.5 1.5L17 3v18l-1.5-1.5L14 21l-1.5-1.5L11 21l-1.5-1.5L8 21l-1.5-1.5L5 21V3z"/></svg>
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #7f77dd 0%, #5d4dd6 100%);">
+        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l1.5 1.5L8 3l1.5 1.5L11 3l1.5 1.5L14 3l1.5 1.5L17 3v18l-1.5-1.5L14 21l-1.5-1.5L11 21l-1.5-1.5L8 21l-1.5-1.5L5 21V3z"/></svg>
       </div>
-      <span class="display-font text-2xl font-bold tracking-tight">vestê</span>
+      <span class="font-bold tracking-tight">vestê<span class="text-violet-400">.ai</span></span>
     </div>
-    <button onclick="document.getElementById('provador').scrollIntoView({behavior:'smooth'})" class="bg-stone-900 text-stone-50 px-5 py-2.5 rounded-full text-sm hover:bg-stone-700 transition">
-      Provar agora
-    </button>
-  </div>
-</header>
+    <button onclick="window.parent.postMessage({type:'veste-close'}, '*'); window.close();" class="mono text-xs text-white/60 hover:text-white px-3 py-1.5 rounded-full glass">✕ FECHAR</button>
+  </header>
 
-<!-- HERO -->
-<section class="max-w-6xl mx-auto px-6 pt-20 pb-16 md:pt-32 md:pb-24">
-  <div class="grid md:grid-cols-12 gap-12 items-center">
-    <div class="md:col-span-7 fade-up">
-      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-900 text-stone-50 rounded-full text-xs font-medium mb-6">
-        <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full step-pulse"></span>
-        IA generativa para moda
+  <div id="garmentInfo" class="hidden glass rounded-2xl p-3 mb-4 flex items-center gap-3">
+    <img id="garmentThumb" class="w-12 h-12 rounded-lg object-cover" />
+    <div class="flex-1 min-w-0">
+      <div class="mono text-[10px] text-violet-300/80 mb-0.5">PEÇA SELECIONADA</div>
+      <div id="garmentName" class="text-sm font-medium truncate">—</div>
+    </div>
+  </div>
+
+  <div id="step-indicator" class="flex justify-center gap-1.5 mb-6">
+    <div data-step="1" class="step-dot h-1 rounded-full bg-violet-500 w-10"></div>
+    <div data-step="2" class="step-dot h-1 rounded-full bg-white/10 w-5"></div>
+    <div data-step="3" class="step-dot h-1 rounded-full bg-white/10 w-5"></div>
+    <div data-step="4" class="step-dot h-1 rounded-full bg-white/10 w-5"></div>
+  </div>
+
+  <div class="glass-strong rounded-2xl p-5 fade-up">
+
+    <div id="step1" class="step-content">
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="mono text-xs text-violet-300/80">[ 01 ]</span>
+        <h3 class="text-xl font-semibold">Sua foto</h3>
       </div>
-      <h1 class="display-font text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight mb-6">
-        Prove antes<br/>
-        <span class="italic font-normal">de comprar.</span>
-      </h1>
-      <p class="text-lg md:text-xl text-stone-600 max-w-xl mb-8 leading-relaxed">
-        Envie sua foto, escolha a peça e veja como fica em você em segundos. Nossa IA recomenda o tamanho ideal pro seu biotipo.
-      </p>
-      <div class="flex flex-wrap gap-4">
-        <button onclick="document.getElementById('provador').scrollIntoView({behavior:'smooth'})" class="group bg-stone-900 text-stone-50 px-7 py-4 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2">
-          Experimentar agora →
+      <p class="text-white/50 mb-5 text-xs">Corpo inteiro, fundo limpo, braços ao lado.</p>
+      <label for="personFile" class="block scan-line border border-dashed border-white/10 hover:border-violet-400/50 rounded-xl p-8 text-center cursor-pointer transition aspect-[4/3] flex flex-col items-center justify-center bg-white/[0.02]">
+        <div id="personPlaceholder">
+          <svg class="w-10 h-10 text-violet-300/60 mb-3 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          <p class="font-medium mb-1 text-white/80 text-sm">Selecione sua foto</p>
+          <p class="mono text-[10px] text-white/40">PNG · JPG</p>
+        </div>
+        <img id="personPreview" class="max-h-full rounded-xl hidden" />
+        <input type="file" id="personFile" accept="image/*" class="hidden" />
+      </label>
+      <div class="flex justify-end mt-5">
+        <button id="btnNext1" disabled class="btn-primary text-white px-5 py-2.5 rounded-full text-sm font-medium">
+          Continuar →
         </button>
-        <a href="#como-funciona" class="px-7 py-4 rounded-full font-medium border border-stone-300 hover:border-stone-900 transition">
-          Como funciona
-        </a>
       </div>
     </div>
-    <div class="md:col-span-5">
-      <div class="relative aspect-[3/4] bg-gradient-to-br from-stone-200 via-stone-100 to-stone-300 rounded-3xl overflow-hidden shadow-2xl">
-        <div class="absolute inset-0 flex items-center justify-center">
-          <svg class="w-32 h-32 text-stone-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M16 4l-4 4-4-4M3 8l5-2 4 2 4-2 5 2v12H3V8z"/></svg>
+
+    <div id="step2" class="step-content hidden">
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="mono text-xs text-violet-300/80">[ 02 ]</span>
+        <h3 class="text-xl font-semibold">Seus dados</h3>
+      </div>
+      <p class="text-white/50 mb-5 text-xs">Pra recomendar o tamanho ideal.</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="mono text-[10px] text-violet-300/80 tracking-wider">ALTURA (CM)</label>
+          <input type="number" id="altura" placeholder="170" class="glass-input w-full mt-1.5 px-3 py-2.5 rounded-lg text-sm" />
         </div>
-        <div class="absolute bottom-6 left-6 right-6 bg-stone-50/95 backdrop-blur p-4 rounded-2xl">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-stone-500 uppercase tracking-wider">FASHN v1.6 + Claude</span>
-            <span class="text-xs font-mono text-emerald-600">● Live</span>
-          </div>
-          <div class="grid grid-cols-3 gap-3 text-center">
-            <div><div class="display-font text-2xl font-bold">M</div><div class="text-xs text-stone-500">Tamanho</div></div>
-            <div><div class="display-font text-2xl font-bold">96%</div><div class="text-xs text-stone-500">Match</div></div>
-            <div><div class="display-font text-2xl font-bold">15s</div><div class="text-xs text-stone-500">Geração</div></div>
-          </div>
+        <div>
+          <label class="mono text-[10px] text-violet-300/80 tracking-wider">PESO (KG)</label>
+          <input type="number" id="peso" placeholder="70" class="glass-input w-full mt-1.5 px-3 py-2.5 rounded-lg text-sm" />
+        </div>
+        <div class="col-span-2">
+          <label class="mono text-[10px] text-violet-300/80 tracking-wider">E-MAIL</label>
+          <input type="email" id="email" placeholder="voce@email.com" class="glass-input w-full mt-1.5 px-3 py-2.5 rounded-lg text-sm" />
+        </div>
+        <div class="col-span-2">
+          <label class="mono text-[10px] text-violet-300/80 tracking-wider">WHATSAPP (OPCIONAL)</label>
+          <input type="tel" id="whatsapp" placeholder="(11) 99999-9999" class="glass-input w-full mt-1.5 px-3 py-2.5 rounded-lg text-sm" />
         </div>
       </div>
+      <div id="processError" class="hidden mt-3 p-3 rounded-lg glass border border-red-500/30 text-red-300 text-xs"></div>
+      <div class="flex justify-between mt-5">
+        <button onclick="goToStep(1)" class="px-4 py-2.5 rounded-full text-sm font-medium glass hover:bg-white/5 transition">Voltar</button>
+        <button id="btnProcess" class="btn-primary text-white px-5 py-2.5 rounded-full text-sm font-medium">
+          Materializar →
+        </button>
+      </div>
     </div>
+
+    <div id="step3" class="step-content hidden text-center py-12">
+      <div class="relative w-20 h-20 mx-auto mb-6">
+        <div class="absolute inset-0 rounded-full border-2 border-violet-500/20"></div>
+        <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-violet-400 animate-spin"></div>
+        <div class="absolute inset-2 rounded-full glass flex items-center justify-center">
+          <svg class="w-7 h-7 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l1.5 1.5L8 3l1.5 1.5L11 3l1.5 1.5L14 3l1.5 1.5L17 3v18l-1.5-1.5L14 21l-1.5-1.5L11 21l-1.5-1.5L8 21l-1.5-1.5L5 21V3z"/></svg>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold mb-2 gradient-text">Materializando...</h3>
+      <p id="loadingMessage" class="mono text-xs text-violet-300/80">[ ANALYZING_BIOMETRY ]</p>
+      <p class="mono text-[10px] text-white/40 mt-3">~15s · FASHN v1.6</p>
+    </div>
+
+    <div id="step4" class="step-content hidden fade-up">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <span class="mono text-[10px] text-violet-300/80 tracking-widest">// COMPLETED</span>
+          <h3 class="text-xl font-semibold gradient-text mt-0.5">Pronto.</h3>
+        </div>
+        <button onclick="resetApp()" class="mono text-xs text-violet-300 hover:text-white">↺ NOVO</button>
+      </div>
+      <div class="aspect-[3/4] rounded-xl overflow-hidden glass scan-line mb-4">
+        <img id="resultImage" class="w-full h-full object-cover" />
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="glass rounded-lg p-3 text-center">
+          <div class="mono text-[9px] text-violet-300/80 mb-0.5">SIZE</div>
+          <div id="resTamanho" class="text-2xl font-bold gradient-text">M</div>
+        </div>
+        <div class="glass rounded-lg p-3 text-center">
+          <div class="mono text-[9px] text-violet-300/80 mb-0.5">BIOTYPE</div>
+          <div id="resBiotipo" class="text-xs font-medium">—</div>
+        </div>
+        <div class="glass rounded-lg p-3 text-center">
+          <div class="mono text-[9px] text-violet-300/80 mb-0.5">BMI</div>
+          <div id="resIMC" class="text-xs font-medium">—</div>
+        </div>
+      </div>
+      <p id="resDicas" class="text-xs leading-relaxed text-white/70 mb-4 px-1">—</p>
+      <div class="flex gap-2">
+        <a id="resDownload" download="resultado.png" class="flex-1 glass text-white text-center px-4 py-3 rounded-full text-sm font-medium hover:bg-white/5 transition">↓ Salvar</a>
+        <button id="btnComprar" onclick="window.parent.postMessage({type:'veste-buy'}, '*');" class="flex-1 btn-primary text-white px-4 py-3 rounded-full text-sm font-medium">Comprar →</button>
+      </div>
+    </div>
+
   </div>
-</section>
-
-<!-- MARQUEE -->
-<section class="border-y border-stone-200 bg-stone-900 text-stone-50 overflow-hidden py-6">
-  <div class="marquee flex gap-12 whitespace-nowrap">
-    <div class="flex gap-12 items-center display-font text-2xl font-bold">
-      <span>Provador Virtual</span><span class="text-stone-500">✦</span>
-      <span>FASHN v1.6</span><span class="text-stone-500">✦</span>
-      <span>−67% Devoluções</span><span class="text-stone-500">✦</span>
-      <span>IA Generativa</span><span class="text-stone-500">✦</span>
-      <span>15 Segundos</span><span class="text-stone-500">✦</span>
-      <span>Caimento Real</span><span class="text-stone-500">✦</span>
-    </div>
-    <div class="flex gap-12 items-center display-font text-2xl font-bold">
-      <span>Provador Virtual</span><span class="text-stone-500">✦</span>
-      <span>FASHN v1.6</span><span class="text-stone-500">✦</span>
-      <span>−67% Devoluções</span><span class="text-stone-500">✦</span>
-      <span>IA Generativa</span><span class="text-stone-500">✦</span>
-      <span>15 Segundos</span><span class="text-stone-500">✦</span>
-      <span>Caimento Real</span><span class="text-stone-500">✦</span>
-    </div>
-  </div>
-</section>
-
-<!-- COMO FUNCIONA -->
-<section id="como-funciona" class="max-w-6xl mx-auto px-6 py-24">
-  <div class="mb-16">
-    <span class="text-xs font-semibold text-stone-500 uppercase tracking-widest">Processo</span>
-    <h2 class="display-font text-4xl md:text-6xl font-black mt-4 max-w-3xl">
-      Três passos para a <span class="italic font-normal">materialização.</span>
-    </h2>
-  </div>
-  <div class="grid md:grid-cols-3 gap-6">
-    <div class="group bg-stone-100 hover:bg-stone-900 hover:text-stone-50 transition-all duration-500 p-8 rounded-3xl aspect-[4/5] flex flex-col justify-between">
-      <div class="flex items-start justify-between">
-        <span class="display-font text-5xl font-black opacity-30">01</span>
-      </div>
-      <div>
-        <h3 class="display-font text-3xl font-bold mb-3">Envie sua foto</h3>
-        <p class="text-sm opacity-70 leading-relaxed">Foto de corpo inteiro com fundo neutro, pose natural.</p>
-      </div>
-    </div>
-    <div class="group bg-stone-100 hover:bg-stone-900 hover:text-stone-50 transition-all duration-500 p-8 rounded-3xl aspect-[4/5] flex flex-col justify-between">
-      <div class="flex items-start justify-between">
-        <span class="display-font text-5xl font-black opacity-30">02</span>
-      </div>
-      <div>
-        <h3 class="display-font text-3xl font-bold mb-3">Escolha a peça</h3>
-        <p class="text-sm opacity-70 leading-relaxed">Foto da roupa (flat-lay ou em modelo). A IA detecta automaticamente.</p>
-      </div>
-    </div>
-    <div class="group bg-stone-100 hover:bg-stone-900 hover:text-stone-50 transition-all duration-500 p-8 rounded-3xl aspect-[4/5] flex flex-col justify-between">
-      <div class="flex items-start justify-between">
-        <span class="display-font text-5xl font-black opacity-30">03</span>
-      </div>
-      <div>
-        <h3 class="display-font text-3xl font-bold mb-3">Veja vestido</h3>
-        <p class="text-sm opacity-70 leading-relaxed">FASHN v1.6 renderiza a peça no seu corpo em ~15 segundos.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PROVADOR APP -->
-<section id="provador" class="bg-stone-900 text-stone-50 py-24">
-  <div class="max-w-5xl mx-auto px-6">
-    <div class="text-center mb-12">
-      <span class="text-xs font-semibold text-stone-400 uppercase tracking-widest">Provador</span>
-      <h2 class="display-font text-4xl md:text-6xl font-black mt-4">
-        Experimente <span class="italic font-normal">agora.</span>
-      </h2>
-    </div>
-
-    <!-- Step indicator -->
-    <div id="step-indicator" class="flex justify-center gap-2 mb-12">
-      <div data-step="1" class="step-dot h-1.5 rounded-full bg-stone-50 w-12 transition-all duration-500"></div>
-      <div data-step="2" class="step-dot h-1.5 rounded-full bg-stone-700 w-6 transition-all duration-500"></div>
-      <div data-step="3" class="step-dot h-1.5 rounded-full bg-stone-700 w-6 transition-all duration-500"></div>
-      <div data-step="4" class="step-dot h-1.5 rounded-full bg-stone-700 w-6 transition-all duration-500"></div>
-      <div data-step="5" class="step-dot h-1.5 rounded-full bg-stone-700 w-6 transition-all duration-500"></div>
-    </div>
-
-    <div class="bg-stone-50 text-stone-900 rounded-3xl p-8 md:p-12 fade-up">
-
-      <!-- STEP 1 -->
-      <div id="step1" class="step-content">
-        <h3 class="display-font text-3xl font-bold mb-2">01. Sua foto</h3>
-        <p class="text-stone-600 mb-8">Foto de corpo inteiro, fundo limpo, braços ao lado.</p>
-        <label for="personFile" class="block border-2 border-dashed border-stone-300 hover:border-stone-900 rounded-2xl p-12 text-center cursor-pointer transition aspect-[16/9] flex flex-col items-center justify-center bg-stone-100/50" id="personDropzone">
-          <div id="personPlaceholder">
-            <svg class="w-12 h-12 text-stone-400 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-            <p class="font-medium mb-1">Clique para enviar</p>
-            <p class="text-xs text-stone-500">PNG, JPG até 10MB</p>
-          </div>
-          <img id="personPreview" class="max-h-full rounded-xl hidden" />
-          <input type="file" id="personFile" accept="image/*" class="hidden" />
-        </label>
-        <div class="flex justify-end mt-8">
-          <button id="btnNext1" disabled class="bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium opacity-30 cursor-not-allowed transition flex items-center gap-2">
-            Continuar →
-          </button>
-        </div>
-      </div>
-
-      <!-- STEP 2 -->
-      <div id="step2" class="step-content hidden">
-        <h3 class="display-font text-3xl font-bold mb-2">02. A peça</h3>
-        <p class="text-stone-600 mb-8">Foto da roupa (fundo branco funciona melhor).</p>
-        <label for="garmentFile" class="block border-2 border-dashed border-stone-300 hover:border-stone-900 rounded-2xl p-12 text-center cursor-pointer transition aspect-[16/9] flex flex-col items-center justify-center bg-stone-100/50">
-          <div id="garmentPlaceholder">
-            <svg class="w-12 h-12 text-stone-400 mb-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 4l-4 4-4-4M3 8l5-2 4 2 4-2 5 2v12H3V8z"/></svg>
-            <p class="font-medium mb-1">Clique para enviar a roupa</p>
-            <p class="text-xs text-stone-500">PNG, JPG até 10MB</p>
-          </div>
-          <img id="garmentPreview" class="max-h-full rounded-xl hidden" />
-          <input type="file" id="garmentFile" accept="image/*" class="hidden" />
-        </label>
-        <div id="uploadError" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mt-4 text-red-700 text-sm"></div>
-        <div class="flex justify-between mt-8">
-          <button onclick="goToStep(1)" class="px-6 py-3 rounded-full font-medium hover:bg-stone-100 transition">Voltar</button>
-          <button id="btnNext2" disabled class="bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium opacity-30 cursor-not-allowed transition flex items-center gap-2">
-            Continuar →
-          </button>
-        </div>
-      </div>
-
-      <!-- STEP 3 -->
-      <div id="step3" class="step-content hidden">
-        <h3 class="display-font text-3xl font-bold mb-2">03. Seus dados</h3>
-        <p class="text-stone-600 mb-8">Pra IA recomendar o tamanho ideal.</p>
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider">Altura (cm)</label>
-            <input type="number" id="altura" placeholder="170" class="w-full mt-2 px-4 py-3 border border-stone-300 rounded-xl focus:outline-none focus:border-stone-900 transition" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider">Peso (kg)</label>
-            <input type="number" id="peso" placeholder="70" class="w-full mt-2 px-4 py-3 border border-stone-300 rounded-xl focus:outline-none focus:border-stone-900 transition" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider">E-mail</label>
-            <input type="email" id="email" placeholder="voce@email.com" class="w-full mt-2 px-4 py-3 border border-stone-300 rounded-xl focus:outline-none focus:border-stone-900 transition" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider">WhatsApp</label>
-            <input type="tel" id="whatsapp" placeholder="(11) 99999-9999" class="w-full mt-2 px-4 py-3 border border-stone-300 rounded-xl focus:outline-none focus:border-stone-900 transition" />
-          </div>
-        </div>
-        <div id="processError" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mt-4 text-red-700 text-sm"></div>
-        <div class="flex justify-between mt-8">
-          <button onclick="goToStep(2)" class="px-6 py-3 rounded-full font-medium hover:bg-stone-100 transition">Voltar</button>
-          <button id="btnProcess" class="bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2">
-            Materializar ✨
-          </button>
-        </div>
-      </div>
-
-      <!-- STEP 4 -->
-      <div id="step4" class="step-content hidden text-center py-16">
-        <svg class="w-16 h-16 mx-auto animate-spin text-stone-900 mb-6" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
-        <h3 class="display-font text-3xl font-bold mb-2">Materializando...</h3>
-        <p id="loadingMessage" class="text-stone-600 mb-1">Analisando biotipo...</p>
-        <p class="text-xs text-stone-400">Isso leva ~15 segundos</p>
-      </div>
-
-      <!-- STEP 5 -->
-      <div id="step5" class="step-content hidden fade-up">
-        <div class="flex items-center justify-between mb-8">
-          <h3 class="display-font text-3xl font-bold">Pronto. <span class="italic font-normal">Veja só.</span></h3>
-          <button onclick="resetApp()" class="flex items-center gap-2 text-sm font-medium hover:text-stone-500 transition">↺ Refazer</button>
-        </div>
-        <div class="grid md:grid-cols-2 gap-8">
-          <div class="aspect-[3/4] bg-stone-100 rounded-2xl overflow-hidden">
-            <img id="resultImage" class="w-full h-full object-cover" />
-          </div>
-          <div class="flex flex-col justify-center space-y-6">
-            <div>
-              <span class="text-xs font-semibold text-stone-500 uppercase tracking-widest">Tamanho recomendado</span>
-              <div id="resTamanho" class="display-font text-7xl font-black mt-2">M</div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-stone-100 p-4 rounded-xl">
-                <div class="text-xs text-stone-500 mb-1">Biotipo</div>
-                <div id="resBiotipo" class="font-semibold">—</div>
-              </div>
-              <div class="bg-stone-100 p-4 rounded-xl">
-                <div class="text-xs text-stone-500 mb-1">IMC</div>
-                <div id="resIMC" class="font-semibold">—</div>
-              </div>
-            </div>
-            <div>
-              <div class="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-2">Análise da IA</div>
-              <p id="resDicas" class="text-sm leading-relaxed text-stone-700">—</p>
-            </div>
-            <div>
-              <div class="flex justify-between text-xs mb-2">
-                <span class="text-stone-500">Confiança</span>
-                <span id="resConfText" class="font-mono font-semibold">—</span>
-              </div>
-              <div class="h-2 bg-stone-200 rounded-full overflow-hidden">
-                <div id="resConfBar" class="h-full bg-stone-900 rounded-full transition-all duration-1000" style="width:0%"></div>
-              </div>
-            </div>
-            <a id="resDownload" download="resultado-veste.png" class="bg-stone-900 text-stone-50 px-7 py-4 rounded-full font-medium hover:bg-stone-700 transition flex items-center justify-center gap-2">
-              ↓ Salvar resultado
-            </a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- TECNOLOGIA -->
-<section id="tecnologia" class="max-w-6xl mx-auto px-6 py-24">
-  <div class="grid md:grid-cols-2 gap-16 items-start">
-    <div>
-      <span class="text-xs font-semibold text-stone-500 uppercase tracking-widest">Tecnologia</span>
-      <h2 class="display-font text-4xl md:text-6xl font-black mt-4 leading-[0.95]">
-        FASHN v1.6 + <span class="italic font-normal">Claude.</span>
-      </h2>
-    </div>
-    <div class="space-y-6 text-stone-600 leading-relaxed">
-      <p>Pipeline de 7 modelos de IA especializados em moda, com flow-matching de 1.2B parâmetros que preserva detalhes finos das peças.</p>
-      <div class="grid grid-cols-2 gap-4 pt-4">
-        <div class="border-t border-stone-300 pt-3">
-          <div class="font-semibold text-stone-900 text-sm">Body Mapping</div>
-          <div class="text-xs">Detecção de medidas e silhueta</div>
-        </div>
-        <div class="border-t border-stone-300 pt-3">
-          <div class="font-semibold text-stone-900 text-sm">Virtual Try-On</div>
-          <div class="text-xs">FASHN v1.6 — 864x1296</div>
-        </div>
-        <div class="border-t border-stone-300 pt-3">
-          <div class="font-semibold text-stone-900 text-sm">Size Matching</div>
-          <div class="text-xs">Claude analisa biotipo</div>
-        </div>
-        <div class="border-t border-stone-300 pt-3">
-          <div class="font-semibold text-stone-900 text-sm">Pipeline</div>
-          <div class="text-xs">~15s do upload ao resultado</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="border-t border-stone-200 py-12">
-  <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-    <div>
-      <div class="display-font text-2xl font-bold mb-2">vestê</div>
-      <p class="text-sm text-stone-500">O provador virtual que materializa o desejo de compra.</p>
-    </div>
-    <div class="text-xs text-stone-500">© 2026 Vestê. Powered by FASHN + Claude.</div>
-  </div>
-</footer>
+</div>
 
 <script>
 let currentStep = 1;
 let personImage = null;
 let clothingImage = null;
+let productInfo = { name: '', url: '' };
 
-// Comprime imagem no navegador antes de enviar (resolve limite de 4.5MB do Vercel)
-async function compressImage(file, maxSize = 1280, quality = 0.85) {
+// Lê parâmetros da URL: ?garment=URL_DA_PEÇA&name=NOME_PRODUTO
+const params = new URLSearchParams(window.location.search);
+const garmentUrl = params.get('garment');
+const productName = params.get('name') || '';
+
+if (garmentUrl) {
+  productInfo.url = garmentUrl;
+  productInfo.name = productName;
+  // Carrega a imagem do produto
+  fetch(garmentUrl)
+    .then(r => r.blob())
+    .then(blob => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        clothingImage = reader.result;
+        document.getElementById('garmentThumb').src = reader.result;
+        document.getElementById('garmentName').textContent = productName || 'Peça selecionada';
+        document.getElementById('garmentInfo').classList.remove('hidden');
+      };
+      reader.readAsDataURL(blob);
+    })
+    .catch(err => console.error('Erro ao carregar imagem do produto:', err));
+}
+
+async function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
-        if (width > height && width > maxSize) {
-          height = (height * maxSize) / width;
-          width = maxSize;
-        } else if (height > maxSize) {
-          width = (width * maxSize) / height;
-          height = maxSize;
+        let maxSize = 1024, quality = 0.8, dataUrl;
+        const tryC = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          if (width > height && width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize; }
+          else if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize; }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+          return (dataUrl.length * 3) / 4;
+        };
+        let bytes = tryC();
+        while (bytes > 1200000 && (maxSize > 600 || quality > 0.5)) {
+          if (quality > 0.55) quality -= 0.1; else maxSize -= 100;
+          bytes = tryC();
         }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(dataUrl);
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -381,92 +231,46 @@ function goToStep(n) {
   document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
   document.getElementById('step' + n).classList.remove('hidden');
   document.querySelectorAll('.step-dot').forEach((el, i) => {
-    if (i + 1 <= n) {
-      el.className = 'step-dot h-1.5 rounded-full bg-stone-50 w-12 transition-all duration-500';
-    } else {
-      el.className = 'step-dot h-1.5 rounded-full bg-stone-700 w-6 transition-all duration-500';
-    }
+    el.className = (i + 1 <= n)
+      ? 'step-dot h-1 rounded-full bg-violet-500 w-10'
+      : 'step-dot h-1 rounded-full bg-white/10 w-5';
   });
   currentStep = n;
 }
 
 function resetApp() {
   personImage = null;
-  clothingImage = null;
   document.getElementById('personFile').value = '';
-  document.getElementById('garmentFile').value = '';
   document.getElementById('personPreview').classList.add('hidden');
-  document.getElementById('garmentPreview').classList.add('hidden');
   document.getElementById('personPlaceholder').classList.remove('hidden');
-  document.getElementById('garmentPlaceholder').classList.remove('hidden');
   document.getElementById('btnNext1').disabled = true;
-  document.getElementById('btnNext1').className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium opacity-30 cursor-not-allowed transition flex items-center gap-2';
-  document.getElementById('btnNext2').disabled = true;
-  document.getElementById('btnNext2').className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium opacity-30 cursor-not-allowed transition flex items-center gap-2';
-  document.getElementById('altura').value = '';
-  document.getElementById('peso').value = '';
-  document.getElementById('email').value = '';
-  document.getElementById('whatsapp').value = '';
+  ['altura','peso','email','whatsapp'].forEach(id => document.getElementById(id).value = '');
   goToStep(1);
 }
 
-// Upload da pessoa (com compressão automática)
 document.getElementById('personFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   const placeholder = document.getElementById('personPlaceholder');
-  placeholder.innerHTML = '<p class="text-stone-500">Comprimindo imagem...</p>';
+  placeholder.innerHTML = '<p class="mono text-xs text-violet-300 blink">[ COMPRESSING... ]</p>';
   try {
     personImage = await compressImage(file);
     const preview = document.getElementById('personPreview');
     preview.src = personImage;
     preview.classList.remove('hidden');
     placeholder.classList.add('hidden');
-    const btn = document.getElementById('btnNext1');
-    btn.disabled = false;
-    btn.className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2 cursor-pointer';
-  } catch (err) {
-    alert('Erro ao processar a imagem. Tente outra foto.');
-  }
+    document.getElementById('btnNext1').disabled = false;
+  } catch (err) { alert('Erro ao processar a imagem.'); }
 });
 
 document.getElementById('btnNext1').addEventListener('click', () => {
   if (!document.getElementById('btnNext1').disabled) goToStep(2);
 });
 
-// Upload da roupa
-document.getElementById('garmentFile').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const errBox = document.getElementById('uploadError');
-  errBox.classList.add('hidden');
-  const placeholder = document.getElementById('garmentPlaceholder');
-  placeholder.innerHTML = '<p class="text-stone-500">Comprimindo imagem...</p>';
-  try {
-    clothingImage = await compressImage(file);
-    const preview = document.getElementById('garmentPreview');
-    preview.src = clothingImage;
-    preview.classList.remove('hidden');
-    placeholder.classList.add('hidden');
-    const btn = document.getElementById('btnNext2');
-    btn.disabled = false;
-    btn.className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2 cursor-pointer';
-  } catch (err) {
-    errBox.textContent = 'Erro ao processar a imagem. Tente outra foto.';
-    errBox.classList.remove('hidden');
-  }
-});
-
-document.getElementById('btnNext2').addEventListener('click', () => {
-  if (!document.getElementById('btnNext2').disabled) goToStep(3);
-});
-
-// Processar
 document.getElementById('btnProcess').addEventListener('click', async () => {
   const altura = document.getElementById('altura').value;
   const peso = document.getElementById('peso').value;
   const email = document.getElementById('email').value;
-  const whatsapp = document.getElementById('whatsapp').value;
   const errBox = document.getElementById('processError');
   errBox.classList.add('hidden');
 
@@ -475,36 +279,28 @@ document.getElementById('btnProcess').addEventListener('click', async () => {
     errBox.classList.remove('hidden');
     return;
   }
+  if (!clothingImage) {
+    errBox.textContent = 'Imagem da peça não carregou. Recarregue a página.';
+    errBox.classList.remove('hidden');
+    return;
+  }
 
-  goToStep(4);
+  goToStep(3);
   const msgEl = document.getElementById('loadingMessage');
-  const messages = [
-    'Analisando biotipo...',
-    'Detectando silhueta...',
-    'Mapeando corpo...',
-    'Analisando tecido da peça...',
-    'Calculando caimento...',
-    'Renderizando resultado...',
-    'Quase pronto...'
-  ];
+  const messages = ['[ ANALYZING_BIOMETRY ]','[ DETECTING_SILHOUETTE ]','[ MAPPING_BODY_3D ]','[ ANALYZING_FABRIC ]','[ COMPUTING_FIT ]','[ RENDERING_OUTPUT ]','[ FINALIZING... ]'];
   let msgIdx = 0;
   const msgInterval = setInterval(() => {
     msgIdx = (msgIdx + 1) % messages.length;
     msgEl.textContent = messages[msgIdx];
-  }, 3000);
+  }, 2500);
 
   try {
-    // Helper que lê resposta como texto e tenta parsear como JSON
     const safeFetch = async (url, body) => {
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const text = await resp.text();
       let data;
       try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 200) }; }
-      if (!resp.ok) throw new Error(data.error || `Erro ${resp.status} em ${url}`);
+      if (!resp.ok) throw new Error(data.error || `Erro ${resp.status}`);
       return data;
     };
 
@@ -517,22 +313,17 @@ document.getElementById('btnProcess').addEventListener('click', async () => {
 
     document.getElementById('resTamanho').textContent = analysis.tamanho;
     document.getElementById('resBiotipo').textContent = analysis.biotipo;
-    document.getElementById('resIMC').textContent = analysis.imc + ' (' + analysis.imcClassificacao + ')';
+    document.getElementById('resIMC').textContent = analysis.imc;
     document.getElementById('resDicas').textContent = analysis.dicas;
-    document.getElementById('resConfText').textContent = analysis.confianca + '%';
-    document.getElementById('resConfBar').style.width = analysis.confianca + '%';
     document.getElementById('resultImage').src = tryOn.image_url;
     document.getElementById('resDownload').href = tryOn.image_url;
 
-    // OPCIONAL: enviar lead pra um Google Sheets, CRM, etc.
-    // fetch('/api/save-lead', { method: 'POST', body: JSON.stringify({email, whatsapp, altura, peso}) });
-
-    goToStep(5);
+    goToStep(4);
   } catch (err) {
     clearInterval(msgInterval);
     document.getElementById('processError').textContent = err.message;
     document.getElementById('processError').classList.remove('hidden');
-    goToStep(3);
+    goToStep(2);
   }
 });
 </script>
