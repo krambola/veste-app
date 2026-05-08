@@ -1,1 +1,10 @@
-{}
+{
+  "functions": {
+    "api/tryon.js": {
+      "maxDuration": 60
+    },
+    "api/size-analysis.js": {
+      "maxDuration": 30
+    }
+  }
+}
