@@ -347,6 +347,36 @@ let currentStep = 1;
 let personImage = null;
 let clothingImage = null;
 
+// Comprime imagem no navegador antes de enviar (resolve limite de 4.5MB do Vercel)
+async function compressImage(file, maxSize = 1280, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function goToStep(n) {
   document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
   document.getElementById('step' + n).classList.remove('hidden');
@@ -380,26 +410,24 @@ function resetApp() {
   goToStep(1);
 }
 
-// Upload da pessoa
-document.getElementById('personFile').addEventListener('change', e => {
+// Upload da pessoa (com compressão automática)
+document.getElementById('personFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) {
-    alert('Imagem muito grande (máx 10MB). Comprima em tinypng.com');
-    return;
-  }
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    personImage = reader.result;
+  const placeholder = document.getElementById('personPlaceholder');
+  placeholder.innerHTML = '<p class="text-stone-500">Comprimindo imagem...</p>';
+  try {
+    personImage = await compressImage(file);
     const preview = document.getElementById('personPreview');
-    preview.src = reader.result;
+    preview.src = personImage;
     preview.classList.remove('hidden');
-    document.getElementById('personPlaceholder').classList.add('hidden');
+    placeholder.classList.add('hidden');
     const btn = document.getElementById('btnNext1');
     btn.disabled = false;
     btn.className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2 cursor-pointer';
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    alert('Erro ao processar a imagem. Tente outra foto.');
+  }
 });
 
 document.getElementById('btnNext1').addEventListener('click', () => {
@@ -407,28 +435,26 @@ document.getElementById('btnNext1').addEventListener('click', () => {
 });
 
 // Upload da roupa
-document.getElementById('garmentFile').addEventListener('change', e => {
+document.getElementById('garmentFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   const errBox = document.getElementById('uploadError');
-  if (file.size > 10 * 1024 * 1024) {
-    errBox.textContent = 'Imagem muito grande (máx 10MB). Comprima em tinypng.com antes de subir.';
-    errBox.classList.remove('hidden');
-    return;
-  }
   errBox.classList.add('hidden');
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    clothingImage = reader.result;
+  const placeholder = document.getElementById('garmentPlaceholder');
+  placeholder.innerHTML = '<p class="text-stone-500">Comprimindo imagem...</p>';
+  try {
+    clothingImage = await compressImage(file);
     const preview = document.getElementById('garmentPreview');
-    preview.src = reader.result;
+    preview.src = clothingImage;
     preview.classList.remove('hidden');
-    document.getElementById('garmentPlaceholder').classList.add('hidden');
+    placeholder.classList.add('hidden');
     const btn = document.getElementById('btnNext2');
     btn.disabled = false;
     btn.className = 'bg-stone-900 text-stone-50 px-7 py-3 rounded-full font-medium hover:bg-stone-700 transition flex items-center gap-2 cursor-pointer';
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    errBox.textContent = 'Erro ao processar a imagem. Tente outra foto.';
+    errBox.classList.remove('hidden');
+  }
 });
 
 document.getElementById('btnNext2').addEventListener('click', () => {
@@ -468,32 +494,26 @@ document.getElementById('btnProcess').addEventListener('click', async () => {
   }, 3000);
 
   try {
-    const [analysisResp, tryOnResp] = await Promise.all([
-      fetch('/api/size-analysis', {
+    // Helper que lê resposta como texto e tenta parsear como JSON
+    const safeFetch = async (url, body) => {
+      const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ altura, peso })
-      }),
-      fetch('/api/tryon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          person_image: personImage,
-          garment_image: clothingImage
-        })
-      })
+        body: JSON.stringify(body)
+      });
+      const text = await resp.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 200) }; }
+      if (!resp.ok) throw new Error(data.error || `Erro ${resp.status} em ${url}`);
+      return data;
+    };
+
+    const [analysis, tryOn] = await Promise.all([
+      safeFetch('/api/size-analysis', { altura, peso }),
+      safeFetch('/api/tryon', { person_image: personImage, garment_image: clothingImage })
     ]);
 
     clearInterval(msgInterval);
-
-    if (!analysisResp.ok) throw new Error('Erro na análise de tamanho');
-    if (!tryOnResp.ok) {
-      const err = await tryOnResp.json();
-      throw new Error(err.error || 'Erro ao gerar imagem');
-    }
-
-    const analysis = await analysisResp.json();
-    const tryOn = await tryOnResp.json();
 
     document.getElementById('resTamanho').textContent = analysis.tamanho;
     document.getElementById('resBiotipo').textContent = analysis.biotipo;
