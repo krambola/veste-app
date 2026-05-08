@@ -1,1 +1,10 @@
-{}
+{
+  "name": "veste-provador-virtual",
+  "version": "1.0.0",
+  "description": "Provador virtual com IA",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.x"
+  }
+}
